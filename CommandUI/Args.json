@@ -1,0 +1,47 @@
+{
+  "Args": [
+    {
+      "Name": "arg1",
+      "Type": "dropbox",
+      "options": [
+        {
+          "Name": "option1",
+          "Value": "value1"
+        },
+        {
+          "Name": "option2",
+          "Value": "value2"
+        }
+      ]
+    },
+    {
+      "Name": "arg2",
+      "Type": "textbox",
+      "Value": "default text"
+    },
+    {
+      "Name": "arg3",
+      "Type": "textbox",
+      "Value": 0
+    },
+    {
+      "Name": "arg4",
+      "Type": "checkbox",
+      "Value": true
+    },
+    {
+      "Name": "arg5",
+      "Type": "radio",
+      "options": [
+        {
+          "Name": "option1",
+          "Value": 1
+        },
+        {
+          "Name": "option2",
+          "Value": 2
+        }
+      ]
+    }
+  ]
+}
