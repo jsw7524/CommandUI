@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -6,7 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
+//using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -31,7 +32,8 @@ namespace CommandUI
                 if (File.Exists(jsonFile))
                 {
                     string jsonContent = File.ReadAllText(jsonFile);
-                    argsData = JsonSerializer.Deserialize<ArgsData>(jsonContent);
+                    argsData = JsonConvert.DeserializeObject<ArgsData>(jsonContent);
+                    int aaa = 1;
                 }
                 else
                 {
@@ -139,6 +141,43 @@ namespace CommandUI
                             control = radioPanel;
                         }
                         break;
+                    case "openfiledialog":
+                        Button openFileButton = new Button
+                        {
+                            Name = "btn_" + arg.Name,
+                            Text = "Browse...",
+                            AutoSize = true
+                        };
+
+                        TextBox filePathTextBox = new TextBox
+                        {
+                            Name = "txt_" + arg.Name,
+                            Width = 200,
+                            ReadOnly = true,
+                            Text = arg.Value?.ToString()
+                        };
+
+                        openFileButton.Click += (sender, e) =>
+                        {
+                            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                            {
+                                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                                {
+                                    filePathTextBox.Text = openFileDialog.FileName;
+                                }
+                            }
+                        };
+
+                        FlowLayoutPanel fileDialogPanel = new FlowLayoutPanel
+                        {
+                            FlowDirection = FlowDirection.LeftToRight,
+                            AutoSize = true
+                        };
+                        fileDialogPanel.Controls.Add(filePathTextBox);
+                        fileDialogPanel.Controls.Add(openFileButton);
+
+                        control = fileDialogPanel;
+                        break;
                 }
 
                 if (control != null)
@@ -150,14 +189,14 @@ namespace CommandUI
             }
 
             // Add a Submit button at the end
-            Button submitButton = new Button
-            {
-                Text = "Submit",
-                AutoSize = true,
-                Margin = new Padding(3, 20, 3, 3)
-            };
-            submitButton.Click += SubmitButton_Click;
-            flowLayoutPanel1.Controls.Add(submitButton);
+            //Button submitButton = new Button
+            //{
+            //    Text = "Submit",
+            //    AutoSize = true,
+            //    Margin = new Padding(3, 20, 3, 3)
+            //};
+            //submitButton.Click += SubmitButton_Click;
+            //flowLayoutPanel1.Controls.Add(submitButton);
         }
 
         private void SubmitButton_Click(object sender, EventArgs e)
@@ -212,6 +251,13 @@ namespace CommandUI
                                     break;
                                 }
                             }
+                        }
+                        break;
+                    case "openfiledialog":
+                        TextBox fileDialogTextBox = flowLayoutPanel1.Controls.Find("txt_" + arg.Name, true).FirstOrDefault() as TextBox;
+                        if (fileDialogTextBox != null)
+                        {
+                            value = fileDialogTextBox.Text;
                         }
                         break;
                 }
