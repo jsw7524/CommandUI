@@ -22,12 +22,12 @@
     {
       "Name": "arg3",
       "Type": "textbox",
-      "Value": 0
+      "Value": "0"
     },
     {
       "Name": "arg4",
       "Type": "checkbox",
-      "Value": true
+      "Value": "true"
     },
     {
       "Name": "arg5",
@@ -35,11 +35,11 @@
       "options": [
         {
           "Name": "option1",
-          "Value": 1
+          "Value": "1"
         },
         {
           "Name": "option2",
-          "Value": 2
+          "Value": "2"
         }
       ]
     }

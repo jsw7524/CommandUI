@@ -1,4 +1,6 @@
-﻿namespace CommandUI
+﻿using System;
+
+namespace CommandUI
 {
     partial class Form1
     {
@@ -36,7 +38,7 @@
             this.flowLayoutPanel1.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(76, 89);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(652, 736);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(641, 736);
             this.flowLayoutPanel1.TabIndex = 0;
             // 
             // Form1
@@ -47,8 +49,14 @@
             this.Controls.Add(this.flowLayoutPanel1);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
 
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
         }
 
         #endregion
