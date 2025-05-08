@@ -213,7 +213,7 @@ namespace CommandUI
                                         if (openFileDialog.ShowDialog() == DialogResult.OK)
                                         {
                                             filePathTextBox.Text = openFileDialog.FileName;
-                                            arg.Value = openFileDialog.FileName; // Update the arg value
+                                            arg.Value = "\"" + openFileDialog.FileName + "\""; // Update the arg value
 
                                             Size size = TextRenderer.MeasureText(filePathTextBox.Text, filePathTextBox.Font);
                                             filePathTextBox.Width = size.Width;
@@ -266,7 +266,13 @@ namespace CommandUI
 
         private void SubmitButton_Click(object sender, EventArgs e)
         {
-            // Implement this method to collect values when the submit button is clicked
+
+            foreach (CommandData cd in commands)
+            {
+                string cmdStr = cd.ToString();
+            }
+
+
         }
 
         //    private void SubmitButton_Click(object sender, EventArgs e)
@@ -343,6 +349,20 @@ namespace CommandUI
         {
             public string Command { get; set; }
             public List<ArgItem> Args { get; set; }
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append(Command);
+
+                foreach (ArgItem arg in Args)
+                {
+                    sb.Append(" ");
+                    sb.Append(arg.ToString());
+                }
+
+                return sb.ToString();
+            }
         }
 
         public class ArgItem
@@ -351,6 +371,10 @@ namespace CommandUI
             public string Type { get; set; }
             public string Value { get; set; }
             public List<ArgOption> Options { get; set; }
+            public override string ToString()
+            {
+                return $"--{Name} {Value} ";
+            }
         }
 
         public class ArgOption
