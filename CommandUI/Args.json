@@ -1,6 +1,7 @@
 [
   {
     "Command": "Command1",
+    "Visible": "False",
     "Args": [
       {
         "Name": "arg1",
@@ -11,6 +12,7 @@
   },
   {
     "Command": "Command2",
+    "Visible": "False",
     "Args": [
       {
         "Name": "arg2",
@@ -21,6 +23,7 @@
   },
   {
     "Command": "Command3",
+    "Visible": "True",
     "Args": [
       {
         "Name": "arg1",

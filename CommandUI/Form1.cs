@@ -60,6 +60,10 @@ namespace CommandUI
             // Process each command data
             foreach (var commandData in commands)
             {
+                if (commandData.Visible ==  false)
+                {
+                    continue;
+                }
                 // Create a group box for each command
                 GroupBox commandGroup = new GroupBox
                 {
@@ -348,6 +352,7 @@ namespace CommandUI
         public class CommandData
         {
             public string Command { get; set; }
+            public bool Visible { set; get; }
             public List<ArgItem> Args { get; set; }
             public override string ToString()
             {
