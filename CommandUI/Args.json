@@ -1,72 +1,45 @@
 [
   {
-    "Command": "Command1",
-    "Visible": "False",
-    "Args": [
-      {
-        "Name": "arg1",
-        "Type": "openfiledialog",
-        "Value": "default text"
-      }
-    ]
-  },
-  {
-    "Command": "Command2",
-    "Visible": "False",
-    "Args": [
-      {
-        "Name": "arg2",
-        "Type": "textbox",
-        "Value": "default text"
-      }
-    ]
-  },
-  {
-    "Command": "Command3",
+    "Command": "D:\\anaconda3\\envs\\NLP\\Scripts\\whisper",
     "Visible": "True",
     "Args": [
       {
-        "Name": "arg1",
+        "Name": "",
+        "Type": "openfiledialog",
+        "Value": ""
+      },
+      {
+        "Name": "--model",
         "Type": "dropbox",
         "options": [
           {
-            "Name": "option1",
-            "Value": "value1"
+            "Name": "turbo",
+            "Value": "turbo"
           },
           {
-            "Name": "option2",
-            "Value": "value2"
+            "Name": "large-v3",
+            "Value": "large-v3"
           }
         ]
       },
       {
-        "Name": "arg2",
-        "Type": "textbox",
-        "Value": "default text"
-      },
-      {
-        "Name": "arg3",
-        "Type": "textbox",
-        "Value": "0"
-      },
-      {
-        "Name": "arg4",
-        "Type": "checkbox",
-        "Value": "true"
-      },
-      {
-        "Name": "arg5",
-        "Type": "radio",
+        "Name": "--language",
+        "Type": "dropbox",
         "options": [
           {
-            "Name": "option1",
-            "Value": "1"
+            "Name": "Chinese",
+            "Value": "Chinese"
           },
           {
-            "Name": "option2",
-            "Value": "2"
+            "Name": "English",
+            "Value": "English"
           }
         ]
+      },
+      {
+        "Name": "--initial_prompt",
+        "Type": "textbox",
+        "Value": " \"以下是普通話的句子。\" "
       }
     ]
   }

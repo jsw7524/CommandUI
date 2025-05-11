@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -14,9 +15,13 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Button = System.Windows.Forms.Button;
 using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
+using System.Diagnostics;
+using static CommandUI.Form1;
 
 namespace CommandUI
 {
+
+
     public partial class Form1 : Form
     {
         private List<CommandData> commands;
@@ -60,7 +65,7 @@ namespace CommandUI
             // Process each command data
             foreach (var commandData in commands)
             {
-                if (commandData.Visible ==  false)
+                if (commandData.Visible == false)
                 {
                     continue;
                 }
@@ -217,7 +222,7 @@ namespace CommandUI
                                         if (openFileDialog.ShowDialog() == DialogResult.OK)
                                         {
                                             filePathTextBox.Text = openFileDialog.FileName;
-                                            arg.Value = "\"" + openFileDialog.FileName + "\""; // Update the arg value
+                                            arg.Value = openFileDialog.FileName; // Update the arg value
 
                                             Size size = TextRenderer.MeasureText(filePathTextBox.Text, filePathTextBox.Font);
                                             filePathTextBox.Width = size.Width;
@@ -256,98 +261,10 @@ namespace CommandUI
 
 
             }
-
-            // Add a Submit button at the end
-            Button submitButton = new Button
-            {
-                Text = "Submit",
-                AutoSize = true,
-                Margin = new Padding(3, 20, 3, 3)
-            };
-            submitButton.Click += SubmitButton_Click;
-            flowLayoutPanel1.Controls.Add(submitButton);
         }
 
-        private void SubmitButton_Click(object sender, EventArgs e)
-        {
-
-            foreach (CommandData cd in commands)
-            {
-                string cmdStr = cd.ToString();
-            }
 
 
-        }
-
-        //    private void SubmitButton_Click(object sender, EventArgs e)
-        //    {
-        //        // You can implement what happens when the submit button is clicked
-        //        // For example, collecting all the values from the form controls
-        //        StringBuilder result = new StringBuilder("Form values:\n");
-
-        //        foreach (var arg in commands.Args)
-        //        {
-        //            string value = "not set";
-
-        //            switch (arg.Type?.ToLower())
-        //            {
-        //                case "dropbox":
-        //                    ComboBox comboBox = flowLayoutPanel1.Controls.Find("cb_" + arg.Name, true).FirstOrDefault() as ComboBox;
-        //                    if (comboBox != null)
-        //                    {
-        //                        int selectedIndex = comboBox.SelectedIndex;
-        //                        if (selectedIndex >= 0 && arg.Options != null && selectedIndex < arg.Options.Count)
-        //                        {
-        //                            value = arg.Options[selectedIndex].Value.ToString();
-        //                        }
-        //                    }
-        //                    break;
-
-        //                case "textbox":
-        //                    TextBox textBox = flowLayoutPanel1.Controls.Find("txt_" + arg.Name, true).FirstOrDefault() as TextBox;
-        //                    if (textBox != null)
-        //                    {
-        //                        value = textBox.Text;
-        //                    }
-        //                    break;
-
-        //                case "checkbox":
-        //                    CheckBox checkBox = flowLayoutPanel1.Controls.Find("chk_" + arg.Name, true).FirstOrDefault() as CheckBox;
-        //                    if (checkBox != null)
-        //                    {
-        //                        value = checkBox.Checked.ToString();
-        //                    }
-        //                    break;
-
-        //                case "radio":
-        //                    FlowLayoutPanel radioPanel = flowLayoutPanel1.Controls.Find("pnl_" + arg.Name, true).FirstOrDefault() as FlowLayoutPanel;
-        //                    if (radioPanel != null)
-        //                    {
-        //                        foreach (RadioButton rb in radioPanel.Controls.OfType<RadioButton>())
-        //                        {
-        //                            if (rb.Checked)
-        //                            {
-        //                                value = rb.Tag?.ToString() ?? rb.Text;
-        //                                break;
-        //                            }
-        //                        }
-        //                    }
-        //                    break;
-        //                case "openfiledialog":
-        //                    TextBox fileDialogTextBox = flowLayoutPanel1.Controls.Find("txt_" + arg.Name, true).FirstOrDefault() as TextBox;
-        //                    if (fileDialogTextBox != null)
-        //                    {
-        //                        value = fileDialogTextBox.Text;
-        //                    }
-        //                    break;
-        //            }
-
-        //            result.AppendLine($"{arg.Name}: {value}");
-        //        }
-
-        //        MessageBox.Show(result.ToString(), "Form Result");
-        //    }
-        //}
 
         public class CommandData
         {
@@ -359,15 +276,24 @@ namespace CommandUI
                 StringBuilder sb = new StringBuilder();
 
                 sb.Append(Command);
+                if (Args != null)
+                {
+                    sb.Append(GetArgs());
+                }
+                return sb.ToString();
+            }
 
+            public string GetArgs()
+            {
+                StringBuilder sb = new StringBuilder();
                 foreach (ArgItem arg in Args)
                 {
                     sb.Append(" ");
                     sb.Append(arg.ToString());
                 }
-
                 return sb.ToString();
             }
+
         }
 
         public class ArgItem
@@ -378,7 +304,7 @@ namespace CommandUI
             public List<ArgOption> Options { get; set; }
             public override string ToString()
             {
-                return $"--{Name} {Value} ";
+                return $"{Name} {Value} ";
             }
         }
 
@@ -387,5 +313,65 @@ namespace CommandUI
             public string Name { get; set; }
             public string Value { get; set; }
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Executor executor = new Executor();
+            executor.Run(commands.First());
+        }
     }
+
+
+    public class Executor
+    {
+
+        public void RunMultiline(IEnumerable<CommandData> orders)
+        {
+            Process cmd = new Process();
+            try
+            {
+
+                cmd.StartInfo.FileName = "cmd.exe";
+                cmd.StartInfo.RedirectStandardInput = true;
+                cmd.StartInfo.RedirectStandardOutput = true;
+                cmd.StartInfo.CreateNoWindow = true;
+                cmd.StartInfo.UseShellExecute = false;
+                cmd.Start();
+                foreach (CommandData order in orders)
+                {
+                    string cd = order.ToString();
+                    cmd.StandardInput.WriteLine(cd);
+                    cmd.StandardInput.Flush();
+
+                }
+                cmd.StandardInput.Close();
+                cmd.WaitForExit();
+            }
+            catch
+            {
+                Console.WriteLine(cmd.StandardOutput.ReadToEnd());
+                int i = 1;
+            }
+
+            //string tmp = cmd.StandardOutput.ReadToEnd();
+            //       
+        }
+
+        public void Run(CommandData command)
+        {
+            Process cmd = new Process();
+            
+            cmd.StartInfo.FileName = command.Command;
+            cmd.StartInfo.Arguments = command.GetArgs();
+            //cmd.StartInfo.RedirectStandardInput = true;
+            //cmd.StartInfo.RedirectStandardOutput = true;
+            //cmd.StartInfo.CreateNoWindow = true;
+            cmd.StartInfo.UseShellExecute = true;
+            cmd.Start();
+            cmd.WaitForExit();
+        }
+
+    }
+
 }
+
