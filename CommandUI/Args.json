@@ -1,15 +1,19 @@
 [
   {
-    "Command": "D:\\anaconda3\\envs\\NLP\\Scripts\\whisper",
+    "ExePath": "D:\\anaconda3\\envs\\NLP\\Scripts\\whisper",
     "Visible": "True",
     "Args": [
       {
         "Name": "",
+        "Visible": "True",
+        "Label": "錄音檔路徑",
         "Type": "openfiledialog",
         "Value": ""
       },
       {
         "Name": "--model",
+        "Visible": "True",
+        "Label": "模型",
         "Type": "dropbox",
         "options": [
           {
@@ -24,6 +28,8 @@
       },
       {
         "Name": "--language",
+        "Visible": "True",
+        "Label": "輸出語言",
         "Type": "dropbox",
         "options": [
           {
@@ -38,6 +44,8 @@
       },
       {
         "Name": "--initial_prompt",
+        "Visible": "False",
+        "Label": "提示",
         "Type": "textbox",
         "Value": " \"以下是普通話的句子。\" "
       }

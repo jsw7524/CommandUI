@@ -87,9 +87,9 @@ namespace CommandUI
                     Dock = DockStyle.Fill,
                     //Padding = new Padding(5)
                 };
-                Label labelCmd = new Label() { Text = commandData.Command };
-                commandPanel.Controls.Add(labelCmd);
-                flowLayoutPanel1.SetFlowBreak(labelCmd, true);
+                //Label labelCmd = new Label() { Text = commandData.ExePath };
+                //commandPanel.Controls.Add(labelCmd);
+                //flowLayoutPanel1.SetFlowBreak(labelCmd, true);
                 if (commandData.Args != null)
                 {
                     // Process each argument for this command
@@ -98,9 +98,10 @@ namespace CommandUI
                         // Create label for each argument
                         Label labelArg = new Label
                         {
-                            Text = arg.Name + ":",
+                            Text = arg.Label + ":",
                             AutoSize = true,
-                            Margin = new Padding(3, 6, 3, 0)
+                            Margin = new Padding(3, 6, 3, 0),
+                            Visible = arg.Visible
                         };
                         commandPanel.Controls.Add(labelArg);
 
@@ -112,6 +113,7 @@ namespace CommandUI
                             case "dropbox":
                                 ComboBox comboBox = new ComboBox
                                 {
+                                    AutoSize = true,
                                     Name = "cb_" + arg.Name,
                                     Width = 200,
                                     DropDownStyle = ComboBoxStyle.DropDownList
@@ -146,9 +148,12 @@ namespace CommandUI
                             case "textbox":
                                 TextBox textBox = new TextBox
                                 {
+                                    AutoSize = true,
                                     Name = "txt_" + arg.Name,
                                     Width = 200,
-                                    Text = arg.Value?.ToString()
+                                    Text = arg.Value?.ToString(),
+                                    Visible = arg.Visible
+
                                 };
                                 textBox.TextChanged += (sender, e) =>
                                 {
@@ -260,6 +265,16 @@ namespace CommandUI
                 flowLayoutPanel1.SetFlowBreak(commandGroup, true);
 
 
+                Button exeButton=new Button()
+                {
+                    Text = "執行",
+                    AutoSize = true,
+                    Dock = DockStyle.Bottom,
+                    Name = "btnExe",
+                    Tag = commandData,
+                };
+                exeButton.Click += button1_Click;
+                commandGroup.Controls.Add(exeButton);
             }
         }
 
@@ -268,14 +283,14 @@ namespace CommandUI
 
         public class CommandData
         {
-            public string Command { get; set; }
+            public string ExePath { get; set; }
             public bool Visible { set; get; }
-            public List<ArgItem> Args { get; set; }
+            public List<Argument> Args { get; set; }
             public override string ToString()
             {
                 StringBuilder sb = new StringBuilder();
 
-                sb.Append(Command);
+                sb.Append(ExePath);
                 if (Args != null)
                 {
                     sb.Append(GetArgs());
@@ -286,7 +301,7 @@ namespace CommandUI
             public string GetArgs()
             {
                 StringBuilder sb = new StringBuilder();
-                foreach (ArgItem arg in Args)
+                foreach (Argument arg in Args)
                 {
                     sb.Append(" ");
                     sb.Append(arg.ToString());
@@ -296,28 +311,51 @@ namespace CommandUI
 
         }
 
-        public class ArgItem
+        public class Argument
         {
             public string Name { get; set; }
+            public string Label { get; set; }
+            public bool Visible { get; set; }
             public string Type { get; set; }
             public string Value { get; set; }
-            public List<ArgOption> Options { get; set; }
+            public List<ArgumentOption> Options { get; set; }
             public override string ToString()
             {
                 return $"{Name} {Value} ";
             }
         }
 
-        public class ArgOption
+        public class ArgumentOption
         {
             public string Name { get; set; }
             public string Value { get; set; }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
             Executor executor = new Executor();
-            executor.Run(commands.First());
+            try
+            {
+                foreach (Control item in this.Controls)
+                {
+                    item.Enabled = false;
+                }
+                await Task.Factory.StartNew(() =>
+                {
+                    executor.Run(commands.First());
+                });
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                foreach (Control item in this.Controls)
+                {
+                    item.Enabled = true;
+                }
+            }
         }
     }
 
@@ -351,17 +389,14 @@ namespace CommandUI
             {
                 Console.WriteLine(cmd.StandardOutput.ReadToEnd());
                 int i = 1;
-            }
-
-            //string tmp = cmd.StandardOutput.ReadToEnd();
-            //       
+            }  
         }
 
         public void Run(CommandData command)
         {
             Process cmd = new Process();
             
-            cmd.StartInfo.FileName = command.Command;
+            cmd.StartInfo.FileName = command.ExePath;
             cmd.StartInfo.Arguments = command.GetArgs();
             //cmd.StartInfo.RedirectStandardInput = true;
             //cmd.StartInfo.RedirectStandardOutput = true;
