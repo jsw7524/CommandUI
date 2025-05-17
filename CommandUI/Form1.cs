@@ -33,6 +33,8 @@ namespace CommandUI
             InitializeUIComponents();
         }
 
+
+
         private void LoadArgsFromJson()
         {
             try
@@ -278,7 +280,6 @@ namespace CommandUI
 
 
 
-
         public class CommandData
         {
             public string ExePath { get; set; }
@@ -351,10 +352,12 @@ namespace CommandUI
                 {
                     item.Enabled = false;
                 }
+
                 await Task.Factory.StartNew(() =>
                 {
                     executor.Run(commands.First());
                 });
+
                 //open directory
                 Process.Start("explorer.exe", outputDir.Value);
 
@@ -371,18 +374,21 @@ namespace CommandUI
                 }
             }
         }
-    }
 
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+
+
+        }
+    }
 
     public class Executor
     {
-
         public void RunMultiline(IEnumerable<CommandData> orders)
         {
             Process cmd = new Process();
             try
             {
-
                 cmd.StartInfo.FileName = "cmd.exe";
                 cmd.StartInfo.RedirectStandardInput = true;
                 cmd.StartInfo.RedirectStandardOutput = true;
@@ -394,7 +400,6 @@ namespace CommandUI
                     string cd = order.ToString();
                     cmd.StandardInput.WriteLine(cd);
                     cmd.StandardInput.Flush();
-
                 }
                 cmd.StandardInput.Close();
                 cmd.WaitForExit();
@@ -409,18 +414,26 @@ namespace CommandUI
         public void Run(CommandData command)
         {
             Process cmd = new Process();
-
             cmd.StartInfo.FileName = command.ExePath;
             cmd.StartInfo.Arguments = command.GetArgs();
             //cmd.StartInfo.RedirectStandardInput = true;
             //cmd.StartInfo.RedirectStandardOutput = true;
             //cmd.StartInfo.CreateNoWindow = true;
-            //cmd.StartInfo.UseShellExecute = true;
+            cmd.StartInfo.UseShellExecute = false;
+            cmd.StartInfo.RedirectStandardError = true;
             cmd.Start();
             cmd.WaitForExit();
+            string error = cmd.StandardError.ReadToEnd();
+            // Save output to file
+            string logFilePath = Path.Combine( command.Args.Where(a=>a.Name== "--output_dir").FirstOrDefault().Value,"Log.txt");
+            using (StreamWriter writer = new StreamWriter(logFilePath, true))
+            {
+                writer.WriteLine($"[INSTRUC] {command.ToString()}");
+                if (!string.IsNullOrEmpty(error))
+                    writer.WriteLine($"[ERROR] {error}");
+                writer.Flush();
+            }
         }
-
     }
-
 }
 

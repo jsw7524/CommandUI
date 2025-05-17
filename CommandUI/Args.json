@@ -54,7 +54,7 @@
         "Visible": "False",
         "Label": "靜音區段的機率",
         "Type": "textbox",
-        "Value": "0.8"
+        "Value": "0.7"
       }
     ]
   }
