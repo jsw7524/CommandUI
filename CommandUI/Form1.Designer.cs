@@ -38,7 +38,7 @@ namespace CommandUI
             this.flowLayoutPanel1.AutoSize = true;
             this.flowLayoutPanel1.BackColor = System.Drawing.SystemColors.Menu;
             this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flowLayoutPanel1.Location = new System.Drawing.Point(28, 30);
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(30, 121);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
             this.flowLayoutPanel1.Size = new System.Drawing.Size(532, 444);
             this.flowLayoutPanel1.TabIndex = 0;
@@ -48,7 +48,7 @@ namespace CommandUI
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(594, 486);
+            this.ClientSize = new System.Drawing.Size(708, 590);
             this.Controls.Add(this.flowLayoutPanel1);
             this.MaximizeBox = false;
             this.MinimizeBox = false;

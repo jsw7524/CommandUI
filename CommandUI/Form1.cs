@@ -130,8 +130,6 @@ namespace CommandUI
                                         comboBox.SelectedIndex = 0;
                                         arg.Value = arg.Options[comboBox.SelectedIndex].Value.ToString();
                                     }
-
-
                                 }
                                 comboBox.SelectedIndexChanged += (sender, e) =>
                                 {
@@ -265,9 +263,9 @@ namespace CommandUI
                 flowLayoutPanel1.SetFlowBreak(commandGroup, true);
 
 
-                Button exeButton=new Button()
+                Button exeButton = new Button()
                 {
-                    Text = "執行",
+                    Text = "轉錄成文字",
                     AutoSize = true,
                     Dock = DockStyle.Bottom,
                     Name = "btnExe",
@@ -336,6 +334,19 @@ namespace CommandUI
             Executor executor = new Executor();
             try
             {
+                if (commands.First().Args.Any(a=>a.Name== "--output_dir"))
+                {
+                    commands.First().Args.Remove(commands.First().Args.Where(a => a.Name == "--output_dir").FirstOrDefault());
+                }
+                Argument outputDir = new Argument()
+                {
+                    Name = "--output_dir",
+                    Label = "輸出路徑",
+                    Type = "textbox",
+                    Value = Path.Combine(Application.StartupPath,
+                    $"Outputs\\{DateTime.Now.ToString("yyyyMMdd")}\\{Path.GetFileName(commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value)}\\")
+                };
+                commands.First().Args.Add(outputDir);
                 foreach (Control item in this.Controls)
                 {
                     item.Enabled = false;
@@ -344,6 +355,9 @@ namespace CommandUI
                 {
                     executor.Run(commands.First());
                 });
+                //open directory
+                Process.Start("explorer.exe", outputDir.Value);
+
             }
             catch
             {
@@ -389,19 +403,19 @@ namespace CommandUI
             {
                 Console.WriteLine(cmd.StandardOutput.ReadToEnd());
                 int i = 1;
-            }  
+            }
         }
 
         public void Run(CommandData command)
         {
             Process cmd = new Process();
-            
+
             cmd.StartInfo.FileName = command.ExePath;
             cmd.StartInfo.Arguments = command.GetArgs();
             //cmd.StartInfo.RedirectStandardInput = true;
             //cmd.StartInfo.RedirectStandardOutput = true;
             //cmd.StartInfo.CreateNoWindow = true;
-            cmd.StartInfo.UseShellExecute = true;
+            //cmd.StartInfo.UseShellExecute = true;
             cmd.Start();
             cmd.WaitForExit();
         }

@@ -48,6 +48,13 @@
         "Label": "提示",
         "Type": "textbox",
         "Value": " \"以下是普通話的句子。\" "
+      },
+      {
+        "Name": "--no_speech_threshold",
+        "Visible": "False",
+        "Label": "靜音區段的機率",
+        "Type": "textbox",
+        "Value": "0.8"
       }
     ]
   }
