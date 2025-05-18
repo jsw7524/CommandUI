@@ -30,22 +30,19 @@ namespace CommandUI
         {
             InitializeComponent();
             快速模式ToolStripMenuItem_Click(null,null);
-            
-
         }
 
 
 
-        private void LoadArgsFromJson()
+        private void LoadArgsFromJson(string settingFile)
         {
             try
             {
-                string jsonFile = Path.Combine(Application.StartupPath, "Args.json");
+                string jsonFile = Path.Combine(Application.StartupPath, settingFile);
                 if (File.Exists(jsonFile))
                 {
                     string jsonContent = File.ReadAllText(jsonFile);
                     commands = JsonConvert.DeserializeObject<List<CommandData>>(jsonContent);
-                    int aaa = 1;
                 }
                 else
                 {
@@ -98,6 +95,7 @@ namespace CommandUI
                     // Process each argument for this command
                     foreach (var arg in commandData.Args)
                     {
+
                         // Create label for each argument
                         Label labelArg = new Label
                         {
@@ -119,7 +117,9 @@ namespace CommandUI
                                     AutoSize = true,
                                     Name = "cb_" + arg.Name,
                                     Width = 200,
-                                    DropDownStyle = ComboBoxStyle.DropDownList
+                                    DropDownStyle = ComboBoxStyle.DropDownList,
+                                    Visible = arg.Visible
+
                                 };
 
                                 if (arg.Options != null)
@@ -333,6 +333,12 @@ namespace CommandUI
 
         private async void button1_Click(object sender, EventArgs e)
         {
+            if (""==commands.First().Args.Where(a=>a.Label=="錄音檔路徑").FirstOrDefault().Value)
+            {
+                MessageBox.Show("請選擇錄音檔路徑", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             Executor executor = new Executor();
             try
             {
@@ -388,7 +394,7 @@ namespace CommandUI
             自定義模式ToolStripMenuItem.CheckOnClick = false;
             快速模式ToolStripMenuItem.BackColor = Color.LightBlue;
             自定義模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
-            LoadArgsFromJson();
+            LoadArgsFromJson("QuickMode.json");
             InitializeUIComponents();
         }
 
@@ -398,6 +404,8 @@ namespace CommandUI
             自定義模式ToolStripMenuItem.CheckOnClick = true;
             快速模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
             自定義模式ToolStripMenuItem.BackColor = Color.LightBlue;
+            LoadArgsFromJson("CustomMode.json");
+            InitializeUIComponents();
         }
     }
 

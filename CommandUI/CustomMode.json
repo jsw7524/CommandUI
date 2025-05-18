@@ -12,7 +12,7 @@
       },
       {
         "Name": "--model",
-        "Visible": "False",
+        "Visible": "True",
         "Label": "模型",
         "Type": "dropbox",
         "options": [
@@ -28,7 +28,7 @@
       },
       {
         "Name": "--language",
-        "Visible": "False",
+        "Visible": "True",
         "Label": "輸出語言",
         "Type": "dropbox",
         "options": [
