@@ -396,6 +396,8 @@ namespace CommandUI
             自定義模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
             LoadArgsFromJson("QuickMode.json");
             InitializeUIComponents();
+            this.Height = flowLayoutPanel1.Height + 10;
+            this.Width = flowLayoutPanel1.Width + 10;
         }
 
         private void 自定義模式ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -406,6 +408,8 @@ namespace CommandUI
             自定義模式ToolStripMenuItem.BackColor = Color.LightBlue;
             LoadArgsFromJson("CustomMode.json");
             InitializeUIComponents();
+            this.Height = flowLayoutPanel1.Height + 10;
+            this.Width = flowLayoutPanel1.Width + 10;
         }
     }
 
@@ -440,6 +444,12 @@ namespace CommandUI
 
         public void Run(CommandData command)
         {
+            string logFilePath = Path.Combine( command.Args.Where(a=>a.Name== "--output_dir").FirstOrDefault().Value,"Log.txt");
+            using (StreamWriter writer = new StreamWriter(logFilePath, true))
+            {
+                writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} INSTRUC] {command.ToString()}");
+                writer.Flush();
+            }
             Process cmd = new Process();
             cmd.StartInfo.FileName = command.ExePath;
             cmd.StartInfo.Arguments = command.GetArgs();
@@ -452,12 +462,10 @@ namespace CommandUI
             cmd.WaitForExit();
             string error = cmd.StandardError.ReadToEnd();
             // Save output to file
-            string logFilePath = Path.Combine( command.Args.Where(a=>a.Name== "--output_dir").FirstOrDefault().Value,"Log.txt");
             using (StreamWriter writer = new StreamWriter(logFilePath, true))
             {
-                writer.WriteLine($"[INSTRUC] {command.ToString()}");
                 if (!string.IsNullOrEmpty(error))
-                    writer.WriteLine($"[ERROR] {error}");
+                    writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] ERROR {error}");
                 writer.Flush();
             }
         }

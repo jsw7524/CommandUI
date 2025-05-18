@@ -21,6 +21,22 @@
             "Value": "turbo"
           },
           {
+            "Name": "Tiny",
+            "Value": "tiny"
+          },
+          {
+            "Name": "Base",
+            "Value": "base"
+          },
+          {
+            "Name": "Small",
+            "Value": "small"
+          },
+          {
+            "Name": "Medium",
+            "Value": "medium"
+          },
+          {
             "Name": "Large-v3",
             "Value": "large-v3"
           }
@@ -33,28 +49,39 @@
         "Type": "dropbox",
         "options": [
           {
-            "Name": "Chinese",
+            "Name": "中文",
             "Value": "Chinese"
           },
           {
-            "Name": "English",
+            "Name": "英文",
             "Value": "English"
+          },
+          {
+            "Name": "日文",
+            "Value": "Japanese"
           }
         ]
       },
       {
         "Name": "--initial_prompt",
-        "Visible": "False",
+        "Visible": "True",
         "Label": "提示",
         "Type": "textbox",
-        "Value": " \"以下是普通話的句子。\" "
+        "Value": "Text:"
+      },
+      {
+        "Name": "--temperature",
+        "Visible": "True",
+        "Label": "輸出文字隨機性",
+        "Type": "textbox",
+        "Value": "0.1"
       },
       {
         "Name": "--no_speech_threshold",
-        "Visible": "False",
-        "Label": "靜音區段的機率",
+        "Visible": "True",
+        "Label": "靜音門檻",
         "Type": "textbox",
-        "Value": "0.7"
+        "Value": "0.6"
       }
     ]
   }
