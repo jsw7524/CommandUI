@@ -29,8 +29,9 @@ namespace CommandUI
         public Form1()
         {
             InitializeComponent();
-            LoadArgsFromJson();
-            InitializeUIComponents();
+            快速模式ToolStripMenuItem_Click(null,null);
+            
+
         }
 
 
@@ -379,6 +380,24 @@ namespace CommandUI
         {
 
 
+        }
+
+        private void 快速模式ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            快速模式ToolStripMenuItem.CheckOnClick = true;
+            自定義模式ToolStripMenuItem.CheckOnClick = false;
+            快速模式ToolStripMenuItem.BackColor = Color.LightBlue;
+            自定義模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
+            LoadArgsFromJson();
+            InitializeUIComponents();
+        }
+
+        private void 自定義模式ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            快速模式ToolStripMenuItem.CheckOnClick = false;
+            自定義模式ToolStripMenuItem.CheckOnClick = true;
+            快速模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
+            自定義模式ToolStripMenuItem.BackColor = Color.LightBlue;
         }
     }
 
