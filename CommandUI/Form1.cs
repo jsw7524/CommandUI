@@ -444,6 +444,9 @@ namespace CommandUI
 
         public void Run(CommandData command)
         {
+            // Create the output directory if it doesn't exist
+            Directory.CreateDirectory(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value);
+
             string logFilePath = Path.Combine( command.Args.Where(a=>a.Name== "--output_dir").FirstOrDefault().Value,"Log.txt");
             using (StreamWriter writer = new StreamWriter(logFilePath, true))
             {
