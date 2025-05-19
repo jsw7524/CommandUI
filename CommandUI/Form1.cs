@@ -3,92 +3,21 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 //using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Button = System.Windows.Forms.Button;
 using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
-using static CommandUI.Form1;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar;
 using System.Runtime.InteropServices.ComTypes;
 using System.CodeDom.Compiler;
 
 namespace CommandUI
 {
-
-    public class SimpleLogger : IDisposable
-    {
-        Stream stream { get; set; }
-        StreamWriter writer { get; set; }
-        public SimpleLogger(Stream st)
-        {
-            stream = st;
-            writer = new StreamWriter(st);
-        }
-
-        public void WriteLog(string message)
-        {
-            writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] {message}");
-            writer.Flush();
-        }
-
-        public void Dispose()
-        {
-
-            writer.Close();
-            stream.Close();
-        }
-    }
-
-    public class CommandProcessor
-    {
-        Executor _executor;
-        SimpleLogger _simpleLogger;
-        public CommandProcessor(Executor executor, SimpleLogger simpleLogger)
-        {
-            _executor = executor;
-            _simpleLogger = simpleLogger;
-        }
-        public async Task Run(CommandData command)
-        {
-            if (command.Args.Any(a => a.Name == "--output_dir"))
-            {
-                command.Args.Remove(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault());
-            }
-
-            Argument outputDir = new Argument()
-            {
-                Name = "--output_dir",
-                Label = "輸出路徑",
-                Type = "textbox",
-                Value = Path.Combine(Application.StartupPath,
-                $"Outputs\\{DateTime.Now.ToString("yyyyMMdd")}\\{Path.GetFileName(command.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Replace(" ", ""))}\\")
-            };
-            command.Args.Add(outputDir);
-            //CommandData originalCmd = commands.First();
-            List<string> audioFiles = command.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Split(';').ToList();
-            await Task.Factory.StartNew(() =>
-            {
-                foreach (string af in audioFiles)
-                {
-                    CommandData exeCMD = JsonConvert.DeserializeObject<CommandData>(JsonConvert.SerializeObject(command));
-                    exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = "\"" + af + "\"";
-                    _executor.Execute(exeCMD);
-                }
-            });
-            Process.Start("explorer.exe", outputDir.Value);
-        }
-    }
-
-
-
     public partial class Form1 : Form
     {
         private List<CommandData> commands;
@@ -106,7 +35,7 @@ namespace CommandUI
             快速模式ToolStripMenuItem_Click(null, null);
         }
 
-        private void LoadArgsFromJson(string settingFile)
+        private void LoadFromJson(string settingFile)
         {
             try
             {
@@ -351,56 +280,6 @@ namespace CommandUI
                 commandGroup.Controls.Add(exeButton);
             }
         }
-
-        public class CommandData
-        {
-            public string ExePath { get; set; }
-            public bool Visible { set; get; }
-            public List<Argument> Args { get; set; }
-            public override string ToString()
-            {
-                StringBuilder sb = new StringBuilder();
-
-                sb.Append(ExePath);
-                if (Args != null)
-                {
-                    sb.Append(GetArgs());
-                }
-                return sb.ToString();
-            }
-
-            public string GetArgs()
-            {
-                StringBuilder sb = new StringBuilder();
-                foreach (Argument arg in Args)
-                {
-                    sb.Append(" ");
-                    sb.Append(arg.ToString());
-                }
-                return sb.ToString();
-            }
-
-        }
-
-        public class Argument
-        {
-            public string Name { get; set; }
-            public string Label { get; set; }
-            public bool Visible { get; set; }
-            public string Type { get; set; }
-            public string Value { get; set; }
-            public List<ArgumentOption> Options { get; set; }
-            public override string ToString()
-            {
-                return $"{Name} {Value} ";
-            }
-        }
-
-        public class ArgumentOption
-        {
-            public string Name { get; set; }
-            public string Value { get; set; }
-        }
         public Control FindControlRecursive(Control parent, string name)
         {
             foreach (Control child in parent.Controls)
@@ -428,7 +307,7 @@ namespace CommandUI
                 {
                     item.Enabled = false;
                 }
-                ////////////////////////
+                //////////////////
                 await commandProcessor.Run(commands.First());
                 //////////////////
             }
@@ -443,9 +322,7 @@ namespace CommandUI
                     item.Enabled = true;
                 }
                 exeBtn.Text = "轉錄文字";
-
             }
-
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -459,7 +336,7 @@ namespace CommandUI
             自定義模式ToolStripMenuItem.CheckOnClick = false;
             快速模式ToolStripMenuItem.BackColor = Color.LightBlue;
             自定義模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
-            LoadArgsFromJson("QuickMode.json");
+            LoadFromJson("QuickMode.json");
             InitializeUIComponents();
             this.Height = flowLayoutPanel1.Height + 10;
             this.Width = flowLayoutPanel1.Width + 10;
@@ -471,84 +348,10 @@ namespace CommandUI
             自定義模式ToolStripMenuItem.CheckOnClick = true;
             快速模式ToolStripMenuItem.BackColor = Form1.DefaultBackColor;
             自定義模式ToolStripMenuItem.BackColor = Color.LightBlue;
-            LoadArgsFromJson("CustomMode.json");
+            LoadFromJson("CustomMode.json");
             InitializeUIComponents();
             this.Height = flowLayoutPanel1.Height + 10;
             this.Width = flowLayoutPanel1.Width + 10;
-        }
-    }
-
-    public class Executor
-    {
-        //public void RunMultiline(IEnumerable<CommandData> orders)
-        //{
-        //    Process cmd = new Process();
-        //    try
-        //    {
-        //        cmd.StartInfo.FileName = "cmd.exe";
-        //        cmd.StartInfo.RedirectStandardInput = true;
-        //        cmd.StartInfo.RedirectStandardOutput = true;
-        //        cmd.StartInfo.CreateNoWindow = true;
-        //        cmd.StartInfo.UseShellExecute = false;
-        //        cmd.Start();
-        //        foreach (CommandData order in orders)
-        //        {
-        //            string cd = order.ToString();
-        //            cmd.StandardInput.WriteLine(cd);
-        //            cmd.StandardInput.Flush();
-        //        }
-        //        cmd.StandardInput.Close();
-        //        cmd.WaitForExit();
-        //    }
-        //    catch
-        //    {
-        //        Console.WriteLine(cmd.StandardOutput.ReadToEnd());
-        //        int i = 1;
-        //    }
-        //}
-        SimpleLogger _simpleLogger;
-        public Executor(SimpleLogger simpleLogger)
-        {
-            _simpleLogger = simpleLogger;
-        }
-        public void Execute(CommandData command)
-        {
-            // Create the output directory if it doesn't exist
-            Directory.CreateDirectory(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value);
-
-            //string logFilePath = Path.Combine(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value, "Log.txt");
-            //using (StreamWriter writer = new StreamWriter(logFilePath, true))
-            //{
-            //    writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} INSTRUC] {command.ToString()}");
-            //    writer.Flush();
-            //}
-
-            _simpleLogger.WriteLog(command.ToString());
-
-            Process cmd = new Process();
-            cmd.StartInfo.FileName = command.ExePath;
-            cmd.StartInfo.Arguments = command.GetArgs();
-            //cmd.StartInfo.RedirectStandardInput = true;
-            //cmd.StartInfo.RedirectStandardOutput = true;
-            //cmd.StartInfo.CreateNoWindow = true;
-            cmd.StartInfo.UseShellExecute = false;
-            cmd.StartInfo.RedirectStandardError = true;
-            cmd.Start();
-            cmd.WaitForExit();
-            string error = cmd.StandardError.ReadToEnd();
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                _simpleLogger.WriteLog(error);
-            }
-
-            // Save output to file
-            //using (StreamWriter writer = new StreamWriter(logFilePath, true))
-            //{
-            //    if (!string.IsNullOrEmpty(error))
-            //        writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] ERROR {error}");
-            //    writer.Flush();
-            //}
         }
     }
 }
