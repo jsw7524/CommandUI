@@ -30,17 +30,18 @@ namespace CommandUI
         public SimpleLogger(Stream st)
         {
             stream = st;
-            StreamWriter writer = new StreamWriter(st);
+            writer = new StreamWriter(st);
         }
 
         public void WriteLog(string message)
         {
             writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] {message}");
+            writer.Flush();
         }
 
         public void Dispose()
         {
-            writer.Flush();
+
             writer.Close();
             stream.Close();
         }
@@ -49,9 +50,11 @@ namespace CommandUI
     public class CommandProcessor
     {
         Executor _executor;
-        public CommandProcessor(Executor executor)
+        SimpleLogger _simpleLogger;
+        public CommandProcessor(Executor executor, SimpleLogger simpleLogger)
         {
             _executor = executor;
+            _simpleLogger = simpleLogger;
         }
         public async Task Run(CommandData command)
         {
@@ -77,7 +80,7 @@ namespace CommandUI
                 {
                     CommandData exeCMD = JsonConvert.DeserializeObject<CommandData>(JsonConvert.SerializeObject(command));
                     exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = "\"" + af + "\"";
-                    _executor.Run(exeCMD);
+                    _executor.Execute(exeCMD);
                 }
             });
             Process.Start("explorer.exe", outputDir.Value);
@@ -90,11 +93,15 @@ namespace CommandUI
     {
         private List<CommandData> commands;
         Executor executor;
+        SimpleLogger simpleLogger;
         CommandProcessor commandProcessor;
+        string logFilePath;
         public Form1()
         {
-            executor = new Executor();
-            commandProcessor=new CommandProcessor(executor);
+            logFilePath = $".\\logs\\log{DateTime.Now.ToString("yyyyMMdd")}.txt";
+            simpleLogger = new SimpleLogger(new FileStream(logFilePath, FileMode.Append, FileAccess.Write));
+            executor = new Executor(simpleLogger);
+            commandProcessor = new CommandProcessor(executor, simpleLogger);
             InitializeComponent();
             快速模式ToolStripMenuItem_Click(null, null);
         }
@@ -443,8 +450,7 @@ namespace CommandUI
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-
-
+            simpleLogger.Dispose();
         }
 
         private void 快速模式ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -500,18 +506,25 @@ namespace CommandUI
         //        int i = 1;
         //    }
         //}
-
-        public void Run(CommandData command)
+        SimpleLogger _simpleLogger;
+        public Executor(SimpleLogger simpleLogger)
+        {
+            _simpleLogger = simpleLogger;
+        }
+        public void Execute(CommandData command)
         {
             // Create the output directory if it doesn't exist
             Directory.CreateDirectory(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value);
 
-            string logFilePath = Path.Combine(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value, "Log.txt");
-            using (StreamWriter writer = new StreamWriter(logFilePath, true))
-            {
-                writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} INSTRUC] {command.ToString()}");
-                writer.Flush();
-            }
+            //string logFilePath = Path.Combine(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value, "Log.txt");
+            //using (StreamWriter writer = new StreamWriter(logFilePath, true))
+            //{
+            //    writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} INSTRUC] {command.ToString()}");
+            //    writer.Flush();
+            //}
+
+            _simpleLogger.WriteLog(command.ToString());
+
             Process cmd = new Process();
             cmd.StartInfo.FileName = command.ExePath;
             cmd.StartInfo.Arguments = command.GetArgs();
@@ -523,13 +536,19 @@ namespace CommandUI
             cmd.Start();
             cmd.WaitForExit();
             string error = cmd.StandardError.ReadToEnd();
-            // Save output to file
-            using (StreamWriter writer = new StreamWriter(logFilePath, true))
+
+            if (!string.IsNullOrEmpty(error))
             {
-                if (!string.IsNullOrEmpty(error))
-                    writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] ERROR {error}");
-                writer.Flush();
+                _simpleLogger.WriteLog(error);
             }
+
+            // Save output to file
+            //using (StreamWriter writer = new StreamWriter(logFilePath, true))
+            //{
+            //    if (!string.IsNullOrEmpty(error))
+            //        writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] ERROR {error}");
+            //    writer.Flush();
+            //}
         }
     }
 }
