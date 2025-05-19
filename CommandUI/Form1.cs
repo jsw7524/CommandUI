@@ -18,9 +18,34 @@ using TextBox = System.Windows.Forms.TextBox;
 using System.Diagnostics;
 using static CommandUI.Form1;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace CommandUI
 {
+
+    public class SimpleLogger : IDisposable
+    {
+        Stream stream { get; set; }
+        StreamWriter writer { get; set; }
+        public SimpleLogger(Stream st )
+        {
+            stream = st;
+            StreamWriter writer = new StreamWriter(st);
+        }
+
+        public void WriteLog(string message)
+        {
+            writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] {message}");
+        }
+
+        public void Dispose()
+        {
+            writer.Flush();
+            writer.Close();
+            stream.Close();
+        }
+    }
+
 
 
     public partial class Form1 : Form
@@ -351,7 +376,7 @@ namespace CommandUI
                 MessageBox.Show("請選擇錄音檔路徑", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            
+
             Button exeBtn = (Button)sender;
             exeBtn.Text = "轉錄中...";
             Executor executor = new Executor();
@@ -366,8 +391,8 @@ namespace CommandUI
                     Name = "--output_dir",
                     Label = "輸出路徑",
                     Type = "textbox",
-                    Value = Path.Combine(Application.StartupPath,
-                    $"Outputs\\{DateTime.Now.ToString("yyyyMMdd")}\\{Path.GetFileName(commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value)}\\")
+                    Value =  Path.Combine(Application.StartupPath,
+                    $"Outputs\\{DateTime.Now.ToString("yyyyMMdd")}\\{Path.GetFileName(commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Replace(" ",""))}\\")
                 };
                 commands.First().Args.Add(outputDir);
                 foreach (Control item in this.Controls)
@@ -384,12 +409,12 @@ namespace CommandUI
                     foreach (string af in audioFiles)
                     {
                         CommandData exeCMD = JsonConvert.DeserializeObject<CommandData>(JsonConvert.SerializeObject(originalCmd));
-                        exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = af;
+                        exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = "\"" + af + "\"";
                         executor.Run(exeCMD);
                     }
                 });
                 //open directory
-                exeBtn.Text =  "轉錄文字";
+                exeBtn.Text = "轉錄文字";
 
                 Process.Start("explorer.exe", outputDir.Value);
 
