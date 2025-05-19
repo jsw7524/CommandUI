@@ -15,10 +15,10 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Button = System.Windows.Forms.Button;
 using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
-using System.Diagnostics;
 using static CommandUI.Form1;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar;
 using System.Runtime.InteropServices.ComTypes;
+using System.CodeDom.Compiler;
 
 namespace CommandUI
 {
@@ -27,7 +27,7 @@ namespace CommandUI
     {
         Stream stream { get; set; }
         StreamWriter writer { get; set; }
-        public SimpleLogger(Stream st )
+        public SimpleLogger(Stream st)
         {
             stream = st;
             StreamWriter writer = new StreamWriter(st);
@@ -46,19 +46,58 @@ namespace CommandUI
         }
     }
 
+    public class CommandProcessor
+    {
+        Executor _executor;
+        public CommandProcessor(Executor executor)
+        {
+            _executor = executor;
+        }
+        public async Task Run(CommandData command)
+        {
+            if (command.Args.Any(a => a.Name == "--output_dir"))
+            {
+                command.Args.Remove(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault());
+            }
+
+            Argument outputDir = new Argument()
+            {
+                Name = "--output_dir",
+                Label = "輸出路徑",
+                Type = "textbox",
+                Value = Path.Combine(Application.StartupPath,
+                $"Outputs\\{DateTime.Now.ToString("yyyyMMdd")}\\{Path.GetFileName(command.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Replace(" ", ""))}\\")
+            };
+            command.Args.Add(outputDir);
+            //CommandData originalCmd = commands.First();
+            List<string> audioFiles = command.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Split(';').ToList();
+            await Task.Factory.StartNew(() =>
+            {
+                foreach (string af in audioFiles)
+                {
+                    CommandData exeCMD = JsonConvert.DeserializeObject<CommandData>(JsonConvert.SerializeObject(command));
+                    exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = "\"" + af + "\"";
+                    _executor.Run(exeCMD);
+                }
+            });
+            Process.Start("explorer.exe", outputDir.Value);
+        }
+    }
+
 
 
     public partial class Form1 : Form
     {
         private List<CommandData> commands;
-
+        Executor executor;
+        CommandProcessor commandProcessor;
         public Form1()
         {
+            executor = new Executor();
+            commandProcessor=new CommandProcessor(executor);
             InitializeComponent();
             快速模式ToolStripMenuItem_Click(null, null);
         }
-
-
 
         private void LoadArgsFromJson(string settingFile)
         {
@@ -72,12 +111,12 @@ namespace CommandUI
                 }
                 else
                 {
-                    MessageBox.Show("Args.json file not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(".json file not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading Args.json: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error loading .json: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         private void InitializeUIComponents()
@@ -306,8 +345,6 @@ namespace CommandUI
             }
         }
 
-
-
         public class CommandData
         {
             public string ExePath { get; set; }
@@ -371,53 +408,22 @@ namespace CommandUI
         }
         private async void button1_Click(object sender, EventArgs e)
         {
-            if ("" == commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value)
-            {
-                MessageBox.Show("請選擇錄音檔路徑", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
             Button exeBtn = (Button)sender;
-            exeBtn.Text = "轉錄中...";
-            Executor executor = new Executor();
             try
             {
-                if (commands.First().Args.Any(a => a.Name == "--output_dir"))
+                if ("" == commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value)
                 {
-                    commands.First().Args.Remove(commands.First().Args.Where(a => a.Name == "--output_dir").FirstOrDefault());
+                    MessageBox.Show("請選擇錄音檔路徑", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
-                Argument outputDir = new Argument()
-                {
-                    Name = "--output_dir",
-                    Label = "輸出路徑",
-                    Type = "textbox",
-                    Value =  Path.Combine(Application.StartupPath,
-                    $"Outputs\\{DateTime.Now.ToString("yyyyMMdd")}\\{Path.GetFileName(commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Replace(" ",""))}\\")
-                };
-                commands.First().Args.Add(outputDir);
+                exeBtn.Text = "轉錄中...";
                 foreach (Control item in this.Controls)
                 {
                     item.Enabled = false;
                 }
-
-
-                CommandData originalCmd = commands.First();
-
-                List<string> audioFiles = commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Split(';').ToList();
-                await Task.Factory.StartNew(() =>
-                {
-                    foreach (string af in audioFiles)
-                    {
-                        CommandData exeCMD = JsonConvert.DeserializeObject<CommandData>(JsonConvert.SerializeObject(originalCmd));
-                        exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = "\"" + af + "\"";
-                        executor.Run(exeCMD);
-                    }
-                });
-                //open directory
-                exeBtn.Text = "轉錄文字";
-
-                Process.Start("explorer.exe", outputDir.Value);
-
+                ////////////////////////
+                await commandProcessor.Run(commands.First());
+                //////////////////
             }
             catch
             {
@@ -429,7 +435,10 @@ namespace CommandUI
                 {
                     item.Enabled = true;
                 }
+                exeBtn.Text = "轉錄文字";
+
             }
+
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -465,32 +474,32 @@ namespace CommandUI
 
     public class Executor
     {
-        public void RunMultiline(IEnumerable<CommandData> orders)
-        {
-            Process cmd = new Process();
-            try
-            {
-                cmd.StartInfo.FileName = "cmd.exe";
-                cmd.StartInfo.RedirectStandardInput = true;
-                cmd.StartInfo.RedirectStandardOutput = true;
-                cmd.StartInfo.CreateNoWindow = true;
-                cmd.StartInfo.UseShellExecute = false;
-                cmd.Start();
-                foreach (CommandData order in orders)
-                {
-                    string cd = order.ToString();
-                    cmd.StandardInput.WriteLine(cd);
-                    cmd.StandardInput.Flush();
-                }
-                cmd.StandardInput.Close();
-                cmd.WaitForExit();
-            }
-            catch
-            {
-                Console.WriteLine(cmd.StandardOutput.ReadToEnd());
-                int i = 1;
-            }
-        }
+        //public void RunMultiline(IEnumerable<CommandData> orders)
+        //{
+        //    Process cmd = new Process();
+        //    try
+        //    {
+        //        cmd.StartInfo.FileName = "cmd.exe";
+        //        cmd.StartInfo.RedirectStandardInput = true;
+        //        cmd.StartInfo.RedirectStandardOutput = true;
+        //        cmd.StartInfo.CreateNoWindow = true;
+        //        cmd.StartInfo.UseShellExecute = false;
+        //        cmd.Start();
+        //        foreach (CommandData order in orders)
+        //        {
+        //            string cd = order.ToString();
+        //            cmd.StandardInput.WriteLine(cd);
+        //            cmd.StandardInput.Flush();
+        //        }
+        //        cmd.StandardInput.Close();
+        //        cmd.WaitForExit();
+        //    }
+        //    catch
+        //    {
+        //        Console.WriteLine(cmd.StandardOutput.ReadToEnd());
+        //        int i = 1;
+        //    }
+        //}
 
         public void Run(CommandData command)
         {
