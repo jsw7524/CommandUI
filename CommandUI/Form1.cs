@@ -17,6 +17,7 @@ using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
 using System.Diagnostics;
 using static CommandUI.Form1;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar;
 
 namespace CommandUI
 {
@@ -29,7 +30,7 @@ namespace CommandUI
         public Form1()
         {
             InitializeComponent();
-            快速模式ToolStripMenuItem_Click(null,null);
+            快速模式ToolStripMenuItem_Click(null, null);
         }
 
 
@@ -225,10 +226,11 @@ namespace CommandUI
                                 {
                                     using (OpenFileDialog openFileDialog = new OpenFileDialog())
                                     {
+                                        openFileDialog.Multiselect = true;
                                         if (openFileDialog.ShowDialog() == DialogResult.OK)
                                         {
-                                            filePathTextBox.Text = openFileDialog.FileName;
-                                            arg.Value = openFileDialog.FileName; // Update the arg value
+                                            filePathTextBox.Text = openFileDialog.FileNames.Aggregate((a, b) => a + ";" + b);
+                                            arg.Value = filePathTextBox.Text; // Update the arg value
 
                                             Size size = TextRenderer.MeasureText(filePathTextBox.Text, filePathTextBox.Font);
                                             filePathTextBox.Width = size.Width;
@@ -268,7 +270,7 @@ namespace CommandUI
 
                 Button exeButton = new Button()
                 {
-                    Text = "轉錄成文字",
+                    Text = "轉錄文字",
                     AutoSize = true,
                     Dock = DockStyle.Bottom,
                     Name = "btnExe",
@@ -330,19 +332,32 @@ namespace CommandUI
             public string Name { get; set; }
             public string Value { get; set; }
         }
-
+        public Control FindControlRecursive(Control parent, string name)
+        {
+            foreach (Control child in parent.Controls)
+            {
+                if (child.Name == name)
+                    return child;
+                Control found = FindControlRecursive(child, name);
+                if (found != null)
+                    return found;
+            }
+            return null;
+        }
         private async void button1_Click(object sender, EventArgs e)
         {
-            if (""==commands.First().Args.Where(a=>a.Label=="錄音檔路徑").FirstOrDefault().Value)
+            if ("" == commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value)
             {
                 MessageBox.Show("請選擇錄音檔路徑", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
+            
+            Button exeBtn = (Button)sender;
+            exeBtn.Text = "轉錄中...";
             Executor executor = new Executor();
             try
             {
-                if (commands.First().Args.Any(a=>a.Name== "--output_dir"))
+                if (commands.First().Args.Any(a => a.Name == "--output_dir"))
                 {
                     commands.First().Args.Remove(commands.First().Args.Where(a => a.Name == "--output_dir").FirstOrDefault());
                 }
@@ -360,12 +375,22 @@ namespace CommandUI
                     item.Enabled = false;
                 }
 
+
+                CommandData originalCmd = commands.First();
+
+                List<string> audioFiles = commands.First().Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value.Split(';').ToList();
                 await Task.Factory.StartNew(() =>
                 {
-                    executor.Run(commands.First());
+                    foreach (string af in audioFiles)
+                    {
+                        CommandData exeCMD = JsonConvert.DeserializeObject<CommandData>(JsonConvert.SerializeObject(originalCmd));
+                        exeCMD.Args.Where(a => a.Label == "錄音檔路徑").FirstOrDefault().Value = af;
+                        executor.Run(exeCMD);
+                    }
                 });
-
                 //open directory
+                exeBtn.Text =  "轉錄文字";
+
                 Process.Start("explorer.exe", outputDir.Value);
 
             }
@@ -447,7 +472,7 @@ namespace CommandUI
             // Create the output directory if it doesn't exist
             Directory.CreateDirectory(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value);
 
-            string logFilePath = Path.Combine( command.Args.Where(a=>a.Name== "--output_dir").FirstOrDefault().Value,"Log.txt");
+            string logFilePath = Path.Combine(command.Args.Where(a => a.Name == "--output_dir").FirstOrDefault().Value, "Log.txt");
             using (StreamWriter writer = new StreamWriter(logFilePath, true))
             {
                 writer.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} INSTRUC] {command.ToString()}");
